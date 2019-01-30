@@ -2,6 +2,8 @@
 set -Eeo pipefail
 # TODO add "-u"
 
+bundle config mirror.https://rubygems.org https://gems.ruby-china.com
+
 # usage: file_env VAR [DEFAULT]
 #    ie: file_env 'XYZ_DB_PASSWORD' 'example'
 # (will allow for "$XYZ_DB_PASSWORD_FILE" to fill in the value of
