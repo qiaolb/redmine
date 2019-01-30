@@ -153,7 +153,7 @@ default:
       password: $SMTP_PASSWOKD
   scm_subversion_command:  /usr/bin/svn
   scm_git_command:         /usr/bin/git
-  		EOF
+EOF
 		fi
 	fi
 
