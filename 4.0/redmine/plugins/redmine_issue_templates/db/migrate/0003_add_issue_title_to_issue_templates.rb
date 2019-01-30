@@ -1,4 +1,4 @@
-class AddIssueTitleToIssueTemplates < ActiveRecord::Migration[4.2]
+class AddIssueTitleToIssueTemplates < ActiveRecord::Migration[5.2]
   def self.up
     add_column :issue_templates, :issue_title, :string
 

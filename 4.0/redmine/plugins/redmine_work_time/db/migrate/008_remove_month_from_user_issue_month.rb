@@ -1,4 +1,4 @@
-class RemoveMonthFromUserIssueMonth < ActiveRecord::Migration[4.2]
+class RemoveMonthFromUserIssueMonth < ActiveRecord::Migration[5.2]
   def self.up
     remove_column :user_issue_months, :month
   end

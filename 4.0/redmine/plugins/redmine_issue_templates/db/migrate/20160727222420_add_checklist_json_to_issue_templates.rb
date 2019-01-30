@@ -1,4 +1,4 @@
-class AddChecklistJsonToIssueTemplates < ActiveRecord::Migration[4.2]
+class AddChecklistJsonToIssueTemplates < ActiveRecord::Migration[5.2]
   def self.up
     add_column :issue_templates, :checklist_json, :text
   end

@@ -1,4 +1,4 @@
-class CreateWtMemberOrders < ActiveRecord::Migration[4.2]
+class CreateWtMemberOrders < ActiveRecord::Migration[5.2]
   def self.up
     create_table :wt_member_orders do |t|
       t.column :user_id, :integer

@@ -1,4 +1,4 @@
-class CreateWtHolidays < ActiveRecord::Migration[4.2]
+class CreateWtHolidays < ActiveRecord::Migration[5.2]
   def self.up
     create_table :wt_holidays do |t|
       t.column :holiday, :date

@@ -1,4 +1,4 @@
-class AddIsDefaultToGlobalIssueTemplates < ActiveRecord::Migration[4.2]
+class AddIsDefaultToGlobalIssueTemplates < ActiveRecord::Migration[5.2]
   def self.up
     add_column :global_issue_templates, :is_default, :boolean, default: false, null: false
   end
