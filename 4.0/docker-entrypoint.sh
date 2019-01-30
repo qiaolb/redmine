@@ -47,7 +47,7 @@ fi
 
 if [ -n "$isLikelyRedmine" ]; then
 	_fix_permissions
-	exec gosu redmine bundle config mirror.https://rubygems.org https://gems.ruby-china.com
+	bundle config mirror.https://rubygems.org https://gems.ruby-china.com
 	if [ ! -f './config/database.yml' ]; then
 		file_env 'REDMINE_DB_MYSQL'
 		file_env 'REDMINE_DB_POSTGRES'
