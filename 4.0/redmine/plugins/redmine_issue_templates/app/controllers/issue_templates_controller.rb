@@ -1,15 +1,13 @@
 # noinspection ALL
 class IssueTemplatesController < ApplicationController
   layout 'base'
-  include IssueTemplatesHelper
   helper :issues
-  include IssuesHelper
   include Concerns::IssueTemplatesCommon
   menu_item :issues
-  before_filter :find_object, only: [:show, :edit, :destroy]
-  before_filter :find_user, :find_project, :authorize,
-                except: [:preview, :move_order_higher, :move_order_lower, :move_order_to_top, :move_order_to_bottom, :move]
-  before_filter :find_tracker, :find_templates, only: [:set_pulldown, :list_templates]
+
+  before_action :find_object, only: %i[show edit update destroy]
+  before_action :find_user, :find_project, :authorize, except: [:preview]
+  before_action :find_tracker, :find_templates, only: %i[set_pulldown list_templates]
   accept_api_auth :index, :list_templates, :load
 
   def index
@@ -21,7 +19,7 @@ class IssueTemplatesController < ApplicationController
 
     @template_map = {}
     tracker_ids.each do |tracker_id|
-      templates = project_templates.search_by_tracker(tracker_id).order_by_position
+      templates = project_templates.search_by_tracker(tracker_id).sorted
       @template_map[Tracker.find(tracker_id)] = templates if templates.any?
     end
 
@@ -32,7 +30,8 @@ class IssueTemplatesController < ApplicationController
 
     respond_to do |format|
       format.html do
-        render layout: !request.xhr?, locals: { apply_all_projects: apply_all_projects? }
+        render layout: !request.xhr?,
+          locals: { apply_all_projects: apply_all_projects?, tracker_ids: tracker_ids }
       end
       format.api do
         render formats: :json, locals: { project_templates: project_templates }
@@ -41,53 +40,56 @@ class IssueTemplatesController < ApplicationController
   end
 
   def show
-    render_form
+    render render_form_params
   end
 
   def new
-    # create empty instance
-    @issue_template ||= IssueTemplate.new(author: @user, project: @project)
-
-    if request.post?
-      @issue_template.safe_attributes = template_params
-      @issue_template.checklist_json = checklists.to_json
-
-      save_and_flash(:notice_successful_create) && return
+    if params[:copy_from].present?
+      @issue_template = IssueTemplate.find(params[:copy_from]).dup
+      @issue_template.title = @issue_template.copy_title
+    else
+      # create empty instance
+      @issue_template ||= IssueTemplate.new(author: @user, project: @project)
     end
-    render_form
+    render render_form_params
   end
 
-  def edit
-    # Change from request.post to request.patch for Rails4.
-    return unless request.patch? || request.put?
-    @issue_template.safe_attributes = template_params
-
+  def create
+    @issue_template = IssueTemplate.new(template_params)
+    @issue_template.author = User.current
+    @issue_template.project = @project
     @issue_template.checklist_json = checklists.to_json
+    # TODO: Should return validation error in case mandatory fields are blank.
+    save_and_flash(:notice_successful_create, :new) && return
+  end
 
-    save_and_flash(:notice_successful_update)
+  def update
+    @issue_template.safe_attributes = template_params
+    @issue_template.checklist_json = checklists.to_json
+    save_and_flash(:notice_successful_update, :show)
   end
 
   def destroy
-    return unless request.post?
     unless @issue_template.destroy
       flash[:error] = l(:enabled_template_cannot_destroy)
       redirect_to action: :show, project_id: @project, id: @issue_template
       return
     end
+
     flash[:notice] = l(:notice_successful_delete)
     redirect_to action: 'index', project_id: @project
   end
 
   # load template description
   def load
-    issue_template_id = params[:issue_template]
+    issue_template_id = params[:template_id]
     template_type = params[:template_type]
     issue_template = if !template_type.blank? && template_type == 'global'
                        GlobalIssueTemplate.find(issue_template_id)
                      else
                        IssueTemplate.find(issue_template_id)
                      end
-    render text: issue_template.template_json
+    render plain: issue_template.template_json
   end
 
   # update pulldown
@@ -143,17 +145,11 @@ class IssueTemplatesController < ApplicationController
     render partial: 'common/preview'
   end
 
-  # Reorder templates
-  def move
-    move_order(params[:to])
-  end
-
-  def orphaned_templates
-    orphaned = IssueTemplate.orphaned(@project.id)
-    render partial: 'orphaned_templates', locals: { orphaned_templates: orphaned }
-  end
-
   private
+
+  def orphaned
+    IssueTemplate.orphaned(@project.id)
+  end
 
   def find_user
     @user = User.current
@@ -182,21 +178,26 @@ class IssueTemplatesController < ApplicationController
     @global_templates = global_templates(@tracker.id)
   end
 
-  def move_order(method)
-    IssueTemplate.find(params[:id]).send "move_#{method}"
-    render_for_move_with_format
+  def save_and_flash(message, action_on_failure)
+    unless @issue_template.save
+      render render_form_params.merge(action: action_on_failure)
+      return
+    end
+
+    respond_to do |format|
+      format.html do
+        flash[:notice] = l(message)
+        redirect_to action: 'show', id: @issue_template.id, project_id: @project
+      end
+      format.js { head 200 }
+    end
   end
 
-  def save_and_flash(message)
-    return unless @issue_template.save
-    flash[:notice] = l(message)
-    redirect_to action: 'show', id: @issue_template.id, project_id: @project
-  end
-
-  def render_form
-    render(layout: !request.xhr?,
-           locals: { checklist_enabled: checklist_enabled?,
-                     issue_template: @issue_template, project: @project })
+  def render_form_params
+    { layout: !request.xhr?,
+      locals: { checklist_enabled: checklist_enabled?,
+               issue_template: @issue_template, project: @project }
+    }
   end
 
   def setting
@@ -204,9 +205,8 @@ class IssueTemplatesController < ApplicationController
   end
 
   def global_templates(tracker_id)
-    if apply_all_projects? && (@inherit_templates.present? || @issue_templates.present?)
-      return []
-    end
+    return [] if apply_all_projects? && templates_exist?
+
     project_id = apply_all_projects? ? nil : @project.id
     GlobalIssueTemplate.get_templates_for_project_tracker(project_id, tracker_id)
   end
@@ -225,6 +225,7 @@ class IssueTemplatesController < ApplicationController
     templates.each do |template|
       @group << template.template_struct(option)
       next unless template.is_default == true
+
       @default_template = default_template_index
     end
   end
@@ -240,5 +241,9 @@ class IssueTemplatesController < ApplicationController
   def template_params
     params.require(:issue_template).permit(:tracker_id, :title, :note, :issue_title, :description, :is_default,
                                            :enabled, :author_id, :position, :enabled_sharing, checklists: [])
+  end
+
+  def templates_exist?
+    @inherit_templates.present? || @issue_templates.present?
   end
 end

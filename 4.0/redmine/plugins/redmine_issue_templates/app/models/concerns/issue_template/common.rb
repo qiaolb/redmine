@@ -15,10 +15,9 @@ module Concerns
 
         validates :title, presence: true
         validates :tracker, presence: true
-        acts_as_list scope: :tracker
 
         scope :enabled, -> { where(enabled: true) }
-        scope :order_by_position, -> { order(:position) }
+        scope :sorted, -> { order(:position) }
         scope :search_by_tracker, lambda { |tracker_id|
           where(tracker_id: tracker_id) if tracker_id.present?
         }
@@ -28,8 +27,6 @@ module Concerns
 
         scope :orphaned, lambda { |project_id = nil|
           condition = all
-          ids = []
-
           if project_id.present? && try(:name) == 'IssueTemplate'
             condition = condition.where(project_id: project_id)
             ids = Tracker.joins(:projects).where(projects: { id: project_id }).pluck(:id)
@@ -57,9 +54,10 @@ module Concerns
 
       def checklist
         return [] if checklist_json.blank?
+
         begin
           JSON.parse(checklist_json)
-        rescue
+        rescue StandardError
           []
         end
       end
@@ -86,8 +84,13 @@ module Concerns
 
       def confirm_disabled
         return unless enabled?
+
         errors.add :base, 'enabled_template_cannot_destroy'
-        false
+        throw :abort
+      end
+
+      def copy_title
+        "copy_of_#{title}"
       end
     end
   end

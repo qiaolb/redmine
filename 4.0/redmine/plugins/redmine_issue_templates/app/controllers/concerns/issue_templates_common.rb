@@ -10,11 +10,8 @@ module Concerns
       end
     end
 
-    def render_for_move_with_format
-      respond_to do |format|
-        format.html { redirect_to action: 'index' }
-        format.xml  { head :ok }
-      end
+    def orphaned_templates
+      render partial: 'common/orphaned', locals: { orphaned_templates: orphaned }
     end
 
     def plugin_setting
@@ -30,8 +27,8 @@ module Concerns
     end
 
     def checklist_enabled?
-      Redmine::Plugin.registered_plugins.keys.include? :redmine_checklists
-    rescue
+      Redmine::Plugin.registered_plugins.key? :redmine_checklists
+    rescue StandardError
       false
     end
   end
