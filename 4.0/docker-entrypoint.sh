@@ -2,6 +2,8 @@
 set -Eeo pipefail
 # TODO add "-u"
 
+exec gosu redmine bundle config mirror.https://rubygems.org https://gems.ruby-china.com
+
 # usage: file_env VAR [DEFAULT]
 #    ie: file_env 'XYZ_DB_PASSWORD' 'example'
 # (will allow for "$XYZ_DB_PASSWORD_FILE" to fill in the value of
@@ -43,7 +45,6 @@ _fix_permissions() {
 if [ -n "$isLikelyRedmine" ] && [ "$(id -u)" = '0' ]; then
 	_fix_permissions
 	exec gosu redmine "$BASH_SOURCE" "$@"
-	exec gosu redmine bundle config mirror.https://rubygems.org https://gems.ruby-china.com
 fi
 
 if [ -n "$isLikelyRedmine" ]; then
