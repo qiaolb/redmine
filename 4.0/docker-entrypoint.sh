@@ -133,14 +133,14 @@ if [ -n "$isLikelyRedmine" ]; then
 	fi
 
 	if [ ! -f './config/configuration.yml' ]; then
-		if [ "SMTP_ADDRESS" ]; then
+		if [ "$SMTP_ADDRESS" ]; then
 			file_env 'SMTP_ADDRESS'
 			file_env 'SMTP_PORT' 25
 			file_env 'SMTP_DOMAIN'
 			file_env 'SMTP_AUTH' ':login'
 			file_env 'STMP_USER'
 			file_env 'SMTP_PASSWOKD'
-			cat > ./config/configuration.sh << EOF
+			cat > ./config/configuration.yml << EOF
 default:
   email_delivery:
     delivery_method: :smtp
