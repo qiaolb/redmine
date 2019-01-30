@@ -154,7 +154,7 @@ RUN set -eux; \
 
 VOLUME /usr/src/redmine/files
 
-COPY redmine/* /usr/src/redmine/
+COPY redmine/ /usr/src/redmine/
 COPY docker-entrypoint.sh /
 ENTRYPOINT ["/docker-entrypoint.sh"]
 
