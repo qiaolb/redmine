@@ -4,11 +4,19 @@ namespace :redmine_issue_templates do
     next unless ENV['RAILS_ENV'] == 'test' && task_name.name == 'redmine_issue_templates:test'
   end
 
-  Rails::TestTask.new(:test) do |t|
-    t.libs << 'lib'
-    t.pattern = 'plugins/redmine_issue_templates/test/**/*_test.rb'
-    t.verbose = false
-    t.warning = false
+  # Rake::TestTask.new(:test) do |t|
+  #   t.libs << 'lib'
+  #   t.pattern = 'plugins/redmine_issue_templates/test/**/*_test.rb'
+  #   t.verbose = false
+  #   t.warning = false
+  # end
+
+  namespace :test do
+    task :test => "test" do
+      $: << "test"
+      test_files = FileList['plugins/redmine_issue_templates/test/**/*_test.rb']
+      Rails::TestUnit::Runner.run(test_files)
+    end
   end
 
   desc 'Run spec for redmine_issue_template plugin'
