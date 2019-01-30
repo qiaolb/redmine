@@ -132,6 +132,31 @@ if [ -n "$isLikelyRedmine" ]; then
 		")"
 	fi
 
+	if [ ! -f './config/configuration.yml' ]; then
+		if [ "SMTP_ADDRESS" ]; then
+			file_env 'SMTP_ADDRESS'
+			file_env 'SMTP_PORT' 25
+			file_env 'SMTP_DOMAIN'
+			file_env 'SMTP_AUTH' ':login'
+			file_env 'STMP_USER'
+			file_env 'SMTP_PASSWOKD'
+			cat > ./config/configuration.sh << EOF
+default:
+  email_delivery:
+    delivery_method: :smtp
+    smtp_settings:
+      address: $SMTP_ADDRESS
+      port: $SMTP_PORT
+      domain: $SMTP_DOMAIN
+      authentication: $SMTP_AUTH
+      user_name: $STMP_USER
+      password: $SMTP_PASSWOKD
+  scm_subversion_command:  /usr/bin/svn
+  scm_git_command:         /usr/bin/git
+  		EOF
+		fi
+	fi
+
 	# ensure the right database adapter is active in the Gemfile.lock
 	cp "Gemfile.lock.${adapter}" Gemfile.lock
 	# install additional gems for Gemfile.local and plugins
