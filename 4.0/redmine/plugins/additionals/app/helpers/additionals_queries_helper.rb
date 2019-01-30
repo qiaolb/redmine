@@ -12,13 +12,6 @@ module AdditionalsQueriesHelper
           params[:set_filter] ||
           session[session_key].nil? ||
           session[session_key][:project_id] != (@project ? @project.id : nil)
-
-      if options[:with_default_query] && !api_request? && %i[op f fields].all? { |k| !params.key?(k) }
-        d_query = query_class.default_query
-        if d_query.present? && query_class.where(id: d_query.id).exists?
-          return additionals_load_query_id(query_class, session_key, d_query.id, options, object_type)
-        end
-      end
       # Give it a name, required to be valid
       @query = query_class.new(name: '_')
       @query.project = @project
@@ -93,15 +86,15 @@ module AdditionalsQueriesHelper
     scope = scope.order(last_login_on: :desc)
                  .limit(params[:limit] || Additionals::SELECT2_INIT_ENTRIES)
     @users = scope.to_a.sort! { |x, y| x.name <=> y.name }
-    render layout: false, partial: 'users'
+    render layout: false, partial: 'auto_completes/additionals_users'
   end
 
   def additionals_query_to_xlsx(items, query, options = {})
     require 'write_xlsx'
     columns = if options[:columns].present? || options[:c].present?
-                query.available_inline_columns
+                query.available_columns
               else
-                query.inline_columns
+                query.columns
               end
 
     stream = StringIO.new('')
@@ -159,6 +152,11 @@ module AdditionalsQueriesHelper
 
   def xlsx_write_item_rows(workbook, worksheet, columns, items, options = {})
     hyperlink_format = workbook.add_format(xlsx_cell_format(:link))
+    even_text_format = workbook.add_format(xlsx_cell_format(:text, '', 0))
+    even_text_format.set_num_format(0x31)
+    odd_text_format = workbook.add_format(xlsx_cell_format(:text, '', 1))
+    odd_text_format.set_num_format(0x31)
+
     items.each_with_index do |line, line_index|
       columns.each_with_index do |c, column_index|
         value = csv_content(c, line)
@@ -167,6 +165,11 @@ module AdditionalsQueriesHelper
           worksheet.write(line_index + 1, column_index, link, hyperlink_format, value)
         elsif xlsx_hyperlink_cell?(value)
           worksheet.write(line_index + 1, column_index, value, hyperlink_format, value)
+        elsif !c.inline?
+          # block column can be multiline strings
+          value.gsub!("\r\n", "\n")
+          text_format = line_index.even? ? even_text_format : odd_text_format
+          worksheet.write_rich_string(line_index + 1, column_index, value, text_format)
         else
           worksheet.write(line_index + 1,
                           column_index,

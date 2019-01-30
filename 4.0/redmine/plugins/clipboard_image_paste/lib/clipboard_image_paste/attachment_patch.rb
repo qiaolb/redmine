@@ -68,6 +68,10 @@ module AttachmentPatch
       @raw.read(*args)
     end
 
+    def eof?
+      @raw.eof?
+    end
+
     # remove alpha channel (because PDF export doesn't support PNGs with alpha channel,
     # see https://github.com/peclik/clipboard_image_paste/issues/24)
     def remove_alpha(imgData)
@@ -84,12 +88,12 @@ module AttachmentPatch
       rescue
         return imgData
       end
-    end if Object.const_defined?(:Magick)
+    end if $clipboard_image_paste_remove_alpha && Object.const_defined?(:Magick)
 
     # without RMagick we cannot remove alpha channel
     def remove_alpha(imgData)
       return imgData
-    end if not Object.const_defined?(:Magick)
+    end if not ($clipboard_image_paste_remove_alpha && Object.const_defined?(:Magick))
   end
 
 end

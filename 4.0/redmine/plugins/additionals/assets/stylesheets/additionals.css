@@ -12,6 +12,12 @@
   padding-left: 0;
 }
 
+.query-description {
+  color: #666;
+  margin-bottom: 15px;
+  font-size: 95%;
+}
+
 /* Mobile menu style FontAwesome icon */
 .flyout-is-active #admin-menu li a.additionals {
   padding-left: 8px !important;
@@ -188,15 +194,6 @@ td.tags span.additionals-tag-label-color {
 
 ul.tags li { margin: 0.25em 0; }
 
-div.tags .tag-pass-1 { font-size: 0.8em; }
-div.tags .tag-pass-2 { font-size: 0.9em; }
-div.tags .tag-pass-3 { font-size: 1em; }
-div.tags .tag-pass-4 { font-size: 1.1em; }
-div.tags .tag-pass-5 { font-size: 1.2em; }
-div.tags .tag-pass-6 { font-size: 1.3em; }
-div.tags .tag-pass-7 { font-size: 1.4em; }
-div.tags .tag-pass-8 { font-size: 1.5em; }
-
 .tag-count { font-size: 0.75em; }
 
 .additionals-tag-label-color a {
@@ -228,6 +225,10 @@ img.additionals-avatar { margin-right: 0.25em; }
 /* Live search */
 .additionals-live-search input.live-search-field { font-size: 16px; }
 
+.additionals-live-search {
+  margin-left: 5px;
+}
+
 .ui-tooltip {
   color: #fff;
   background: #000;
@@ -243,6 +244,7 @@ a.external.redmine-link {
   background-image: url(../images/redmine-link.png);
   background-position: 0% 40%;
   padding-left: 13px;
+  background-repeat: no-repeat;
 }
 
 div.macro-box {
@@ -289,4 +291,36 @@ div.macro-desc {
 #top-menu .menu-children li a:hover {
   color: #fff;
   background-color: #759fcf;
+}
+
+/* Wiki icon add */
+div.additionals-projects li.project a.icon {
+  margin-left: 3px;
+}
+
+div.additionals-projects li.project.even,
+div.additionals-projects li.project.odd {
+  border-bottom: 1px solid #ddd;
+  padding: 4px;
+  background-color: inherit;
+  list-style-position: inside;
+}
+
+.additionals-projects ul {
+  padding-left: 0;
+}
+
+/* drop it with Redmine4 */
+.default-query-settings-label label {
+  margin-left: -100px !important;
+}
+
+.jstb_macros {
+  background-image: url(../images/jstoolbar/bt_macros.png);
+}
+
+div.relation-list-header {
+  background: #eee;
+  font-weight: bold;
+  padding-bottom: 2px;
 }

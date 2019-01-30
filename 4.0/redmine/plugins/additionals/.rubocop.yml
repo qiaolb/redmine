@@ -27,7 +27,7 @@ Metrics/ModuleLength:
   Enabled: false
 
 Metrics/PerceivedComplexity:
-  Max: 20
+  Max: 25
 
 Rails/SkipsModelValidations:
   Enabled: false
@@ -35,7 +35,7 @@ Rails/SkipsModelValidations:
 Rails/CreateTableWithTimestamps:
   Enabled: false
 
-# we drop this, if we drop Rails 4.2 support
+# app/model/application_record.rb is missing in redmine, we can't use ApplicationRecord
 Rails/ApplicationRecord:
   Enabled: false
 

@@ -1,6 +1,51 @@
 Changelog
 =========
 
+2.0.19
+++++++
+
+- mermaid 8.0.0 support
+- fixed close issue without permission
+- create correct journal entry if issue status changed from sidebar #37
+- create correct journal entry if issue has been 'assigned to me' from sidebar
+
+2.0.18
+++++++
+
+- Performance improvement (#36)
+- FontAwesome 5.6.3 support
+- Fix problem from migrating from Redmine 3.x to Redmine 4 with lost settings
+
+2.0.17
+++++++
+
+- Fix bug with undefined constant for tags
+- add possibility to use custom date with date macro
+- FontAwesome 5.6.0 support
+
+2.0.16
+++++++
+
+- CSS fix for project macro
+- More compatibility for autocomplete_users with other plugins (like redmine_contacts_helpdesk)
+- Compatibility to wiking plugin (macro list)
+- Add Spanish translation, thanks to @dktcoding!
+- Wiki button for available macros
+- replace permission hide-in-memberbox with "hide" as role setting - check your roles, if you used this permission!
+- replace multiple current_date macros with one macro called date
+- cleanup macros: if no data exists, macros is displayed instead of data
+  (before some macros used error messages other hide message at all)
+
+2.0.15
+++++++
+
+- FontAwesome 5.5.0 support
+- Usability improvement for change author in issue formular
+- options and permission for issue requires timelog to use status
+- New option to freeze issues on close. With permission "edit closed issue" user can break this rule.
+- Fix problem with help menu and other redmine plugins (compatibility problem with other plugins)
+- Fix problem with disabled users and changing author for issues
+
 2.0.14
 ++++++
 

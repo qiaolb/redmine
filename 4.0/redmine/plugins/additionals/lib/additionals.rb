@@ -2,7 +2,8 @@ module Additionals
   MAX_CUSTOM_MENU_ITEMS = 5
   SELECT2_INIT_ENTRIES = 20
 
-  LIST_SEPARATOR = ' &#187; '.html_safe # rubocop:disable Rails/OutputSafety
+  GOTO_LIST = " \xc2\xbb".freeze
+  LIST_SEPARATOR = GOTO_LIST + ' '
 
   class << self
     def setup
@@ -15,20 +16,23 @@ module Additionals
                Issue
                IssuePriority
                TimeEntry
+               Project
                Wiki
                WikiController
+               Principal
+               QueryFilter
+               Role
                UserPreference])
 
-      patch(%w[QueryFilter]) if Redmine::VERSION.to_s >= '3.4'
-
       Rails.configuration.assets.paths << Emoji.images_path
-      # Send Emoji Patches to all wiki formatters available to be able to switch formatter without app restart
       Redmine::WikiFormatting.format_names.each do |format|
         case format
         when 'markdown'
-          Redmine::WikiFormatting::Markdown::HTML.send(:include, Additionals::Patches::FormatterMarkdownPatch)
+          Redmine::WikiFormatting::Markdown::HTML.send(:include, Patches::FormatterMarkdownPatch)
+          Redmine::WikiFormatting::Markdown::Helper.send(:include, Patches::FormattingHelperPatch)
         when 'textile'
-          Redmine::WikiFormatting::Textile::Formatter.send(:include, Additionals::Patches::FormatterTextilePatch)
+          Redmine::WikiFormatting::Textile::Formatter.send(:include, Patches::FormatterTextilePatch)
+          Redmine::WikiFormatting::Textile::Helper.send(:include, Patches::FormattingHelperPatch)
         end
       end
 
@@ -53,10 +57,22 @@ module Additionals
     end
 
     def settings
-      if Rails.version >= '5.2'
-        Setting[:plugin_additionals]
+      settings_compatible(:plugin_additionals)
+    end
+
+    def settings_compatible(plugin_name)
+      if Setting[plugin_name].class == Hash
+        if Rails.version >= '5.2'
+          # convert Rails 4 data (this runs only once)
+          new_settings = ActiveSupport::HashWithIndifferentAccess.new(Setting[plugin_name])
+          Setting.send("#{plugin_name}=", new_settings)
+          new_settings
+        else
+          ActionController::Parameters.new(Setting[plugin_name])
+        end
       else
-        ActionController::Parameters.new(Setting[:plugin_additionals])
+        # Rails 5 uses ActiveSupport::HashWithIndifferentAccess
+        Setting[plugin_name]
       end
     end
 

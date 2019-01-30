@@ -40,7 +40,7 @@ Requirements
 +--------------------+----------------------+
 | `Redmine`_ version | >= 3.4.0             |
 +--------------------+----------------------+
-| `Ruby`_ version    | >= 2.2.0             |
+| `Ruby`_ version    | >= 2.3.0             |
 +--------------------+----------------------+
 | Gem packages       | see `Gemfile`_       |
 +--------------------+----------------------+
@@ -115,6 +115,8 @@ Features
   * vimeo
   * youtube
 
+* macro list with all available macros at /help/macros
+* macro button for wiki toolbar with available macros with project and permission context support
 * option to remove "My page" and/or "Help" from top menu
 * customize top menu items
 * disable (hide) modules for projects
@@ -130,6 +132,7 @@ Features
 * change issue state on sidebar
 * configurable issue rules
 
+  * freeze closed issue
   * closing issue with open sub issues
   * change assigned_to automatically, if issue status changes
   * assigned_to has changed, but status change is required, too
@@ -151,8 +154,8 @@ It provides :
 * `bootstrap-datepicker 1.8.0 <https://github.com/uxsolutions/bootstrap-datepicker>`_
 * `d3 3.5.17 <https://d3js.org/>`_
 * `d3plus v2.0.0-alpha.17 <https://d3plus.org/>`_
-* `FontAwesome 5.3.1 <https://fontawesome.com/>`_
-* `mermaid 8.0.0-rc8 <https://github.com/knsv/mermaid/>`_
+* `FontAwesome 5.6.3 <https://fontawesome.com/>`_
+* `mermaid 8.0.0 <https://github.com/knsv/mermaid/>`_
 * `nvd3 1.8.6 <https://github.com/novus/nvd3>`_
 * `ZeroClipboard 2.3.0 <https://github.com/zeroclipboard/zeroclipboard>`_
 

@@ -37,17 +37,18 @@ module Additionals
     end
 
     def additionals_settings_tabs
-      tabs = []
-      tabs << { name: 'general', partial: 'additionals/settings/general', label: :label_general }
-      tabs << { name: 'content', partial: 'additionals/settings/overview', label: :label_overview_page }
-      tabs << { name: 'wiki', partial: 'additionals/settings/wiki', label: :label_wiki }
-      tabs << { name: 'rules', partial: 'additionals/settings/issues', label: :label_issue_plural }
-      tabs << { name: 'projects', partial: 'additionals/settings/projects', label: :label_project_plural }
-      tabs << { name: 'users', partial: 'additionals/settings/users', label: :label_user_plural }
+      tabs = [{ name: 'general', partial: 'additionals/settings/general', label: :label_general },
+              { name: 'content', partial: 'additionals/settings/overview', label: :label_overview_page },
+              { name: 'wiki', partial: 'additionals/settings/wiki', label: :label_wiki },
+              { name: 'macros', partial: 'additionals/settings/macros', label: :label_macro_plural },
+              { name: 'rules', partial: 'additionals/settings/issues', label: :label_issue_plural },
+              { name: 'projects', partial: 'additionals/settings/projects', label: :label_project_plural },
+              { name: 'users', partial: 'additionals/settings/users', label: :label_user_plural },
+              { name: 'web', partial: 'additionals/settings/web_apis', label: :label_web_apis }]
+
       if User.current.try(:hrm_user_type_id).nil?
         tabs << { name: 'menu', partial: 'additionals/settings/menu', label: :label_settings_menu }
       end
-      tabs << { name: 'web', partial: 'additionals/settings/web_apis', label: :label_web_apis }
 
       tabs
     end
@@ -126,8 +127,12 @@ module Additionals
       if uri.scheme.nil? && uri.path[0] != '/' && issue_id_parts.count == 2
         rc[:issue_id] = url
       else
-        current_uri = URI.parse(request.original_url)
-        return rc unless uri.host == current_uri.host
+        if request.nil?
+          # this is used by mailer
+          return rc if url.exclude?(Setting.host_name)
+        elsif uri.host != URI.parse(request.original_url).host
+          return rc
+        end
 
         s_pos = uri.path.rindex('/issues/')
         id_string = uri.path[s_pos + 8..-1]
@@ -183,17 +188,6 @@ module Additionals
       true if /cygwin|mswin|mingw|bccwin|wince|emx/ =~ RUBY_PLATFORM
     end
 
-    def memberbox_view_roles
-      view_roles = []
-      @users_by_role.keys.sort.each do |role|
-        if !role.permissions.include?(:hide_in_memberbox) ||
-           (role.permissions.include?(:hide_in_memberbox) && User.current.allowed_to?(:show_hidden_roles_in_memberbox, @project))
-          view_roles << role
-        end
-      end
-      view_roles
-    end
-
     def bootstrap_datepicker_locale
       s = ''
       locale = User.current.language.presence || ::I18n.locale
@@ -203,23 +197,25 @@ module Additionals
       s
     end
 
-    def auto_complete_select_entries(name, type, option_tags, options = {})
+    def autocomplete_select_entries(name, type, option_tags, options = {})
       unless option_tags.is_a?(String) || option_tags.blank?
         # if option_tags is not an array, it should be an object
         option_tags = options_for_select([[option_tags.try(:name), option_tags.try(:id)]], option_tags.try(:id))
       end
+      options[:project] = @project if @project.present? && options[:project].blank?
+
       s = []
       s << hidden_field_tag("#{name}[]", '') if options[:multiple]
       s << select_tag(name,
                       option_tags,
                       include_blank: options[:include_blank],
                       multiple: options[:multiple],
-                      disabled: options[:disabled], class: "#{type}-relation")
+                      disabled: options[:disabled])
       s << render(layout: false,
                   partial: 'additionals/select2_ajax_call.js',
                   formats: [:js],
                   locals: { field_id: sanitize_to_id(name),
-                            ajax_url: send("auto_complete_#{type}_path", project_id: @project, user_id: options[:user_id]),
+                            ajax_url: send("#{type}_path", project_id: options[:project], user_id: options[:user_id]),
                             options: options })
       safe_join(s)
     end
@@ -257,10 +253,6 @@ module Additionals
 
     def additionals_load_observe_field
       additionals_include_js('additionals_observe_field')
-    end
-
-    def additionals_load_delay_ajax_indicator
-      additionals_include_js('additionals_delay_ajax_indicator')
     end
 
     def additionals_load_font_awesome

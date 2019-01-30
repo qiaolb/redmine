@@ -27,12 +27,12 @@ class IssuesControllerTest < Additionals::ControllerTest
            :queries
 
   def setup
-    manager_role = Role.find(1)
+    manager_role = roles(:roles_001)
     manager_role.add_permission!(:edit_issue_author)
   end
 
   test 'author field as authorized user in new with change' do
-    manager_role = Role.find(1)
+    manager_role = roles(:roles_001)
     manager_role.add_permission!(:change_new_issue_author)
     session[:user_id] = 2
     get :new,
@@ -127,6 +127,58 @@ class IssuesControllerTest < Additionals::ControllerTest
       get :show,
           params: { id: 2 }
       assert_select 'ul.issue-status-change-sidebar', count: 0
+    end
+  end
+
+  test 'don\'t show forbidden status in issue sidebar without timelog' do
+    with_additionals_settings(issue_change_status_in_sidebar: 1,
+                              issue_timelog_required: 1,
+                              issue_timelog_required_tracker: ['1'],
+                              issue_timelog_required_status: ['5']) do
+
+      @request.session[:user_id] = 2
+      issue = Issue.generate!(tracker_id: 1, status_id: 1)
+      get :show,
+          params: { id: issue.id }
+
+      assert_response :success
+      assert_select 'ul.issue-status-change-sidebar a.status-switch.status-4'
+      assert_select 'ul.issue-status-change-sidebar a.status-switch.status-5', count: 0
+    end
+  end
+
+  test 'show forbidden status in issue sidebar if disabled' do
+    with_additionals_settings(issue_change_status_in_sidebar: 1,
+                              issue_timelog_required: 0,
+                              issue_timelog_required_tracker: [1],
+                              issue_timelog_required_status: [5]) do
+      @request.session[:user_id] = 2
+      issue = Issue.generate!(tracker_id: 1, status_id: 1)
+      get :show,
+          params: { id: issue.id }
+
+      assert_response :success
+      assert_select 'ul.issue-status-change-sidebar a.status-switch.status-4'
+      assert_select 'ul.issue-status-change-sidebar a.status-switch.status-5'
+    end
+  end
+
+  test 'show forbidden status in issue sidebar with permission issue_timelog_never_required' do
+    manager_role = roles(:roles_002)
+    manager_role.add_permission!(:issue_timelog_never_required)
+
+    with_additionals_settings(issue_change_status_in_sidebar: 1,
+                              issue_timelog_required: 1,
+                              issue_timelog_required_tracker: [1],
+                              issue_timelog_required_status: [5]) do
+      @request.session[:user_id] = 2
+      issue = Issue.generate!(tracker_id: 1, status_id: 1)
+      get :show,
+          params: { id: issue.id }
+
+      assert_response :success
+      assert_select 'ul.issue-status-change-sidebar a.status-switch.status-4'
+      assert_select 'ul.issue-status-change-sidebar a.status-switch.status-5'
     end
   end
 end
