@@ -4,7 +4,7 @@ namespace :redmine_issue_templates do
     next unless ENV['RAILS_ENV'] == 'test' && task_name.name == 'redmine_issue_templates:test'
   end
 
-  Rake::TestTask.new(:test) do |t|
+  Rails::TestTask.new(:test) do |t|
     t.libs << 'lib'
     t.pattern = 'plugins/redmine_issue_templates/test/**/*_test.rb'
     t.verbose = false
