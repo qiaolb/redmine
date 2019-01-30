@@ -3,7 +3,7 @@
 # This file is a part of Redmine Checklists (redmine_checklists) plugin,
 # issue checklists management plugin for Redmine
 #
-# Copyright (C) 2011-2017 RedmineUP
+# Copyright (C) 2011-2018 RedmineUP
 # http://www.redmineup.com/
 #
 # redmine_checklists is free software: you can redistribute it and/or modify
@@ -46,8 +46,7 @@ class ChecklistTest < ActiveSupport::TestCase
            :journal_details,
            :queries
 
-  RedmineChecklists::TestCase.create_fixtures(Redmine::Plugin.find(:redmine_checklists).directory + '/test/fixtures/',
-                                         [:checklists])
+  RedmineChecklists::TestCase.create_fixtures(Redmine::Plugin.find(:redmine_checklists).directory + '/test/fixtures/', [:checklists])
   def setup
     RedmineChecklists::TestCase.prepare
     Setting.default_language = 'en'
@@ -56,10 +55,7 @@ class ChecklistTest < ActiveSupport::TestCase
                             :status_id => 1, :priority => IssuePriority.first,
                             :subject => 'Invoice Issue 1')
     @checklist_1 = Checklist.create(:subject => 'TEST1', :position => 1, :issue => @issue_1)
-
   end
-
-
 
   test "should save checklist" do
     assert @checklist_1.save, "Checklist save error"

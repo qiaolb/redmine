@@ -20,7 +20,9 @@
 # along with redmine_checklists.  If not, see <http://www.gnu.org/licenses/>.
 
 require File.expand_path('../../test_helper', __FILE__)
-class ChecklistsControllerTest < ActionController::TestCase
+include RedmineChecklists::TestHelper
+
+class IssueTest < ActiveSupport::TestCase
   fixtures :projects,
            :users,
            :roles,
@@ -44,48 +46,40 @@ class ChecklistsControllerTest < ActionController::TestCase
            :journals,
            :journal_details,
            :queries
-  RedmineChecklists::TestCase.create_fixtures(Redmine::Plugin.find(:redmine_checklists).directory + '/test/fixtures/', [:checklists])
 
+  RedmineChecklists::TestCase.create_fixtures(Redmine::Plugin.find(:redmine_checklists).directory + '/test/fixtures/', [:checklists])
   def setup
     RedmineChecklists::TestCase.prepare
     Setting.default_language = 'en'
-    Project.find(1).enable_module!(:checklists)
-    User.current = nil
-    @project_1 = Project.find(1)
-    @issue_1 = Issue.find(1)
-    @checklist_1 = Checklist.find(1)
+    @project = Project.find(1)
+    @issue = Issue.create(:project => @project, :tracker_id => 1, :author_id => 1,
+                          :status_id => 1, :priority => IssuePriority.first,
+                          :subject => 'TestIssue')
+    @checklist_1 = Checklist.create(:subject => 'TEST1', :position => 1, :issue => @issue)
+    @checklist_2 = Checklist.create(:subject => 'TEST2', :position => 2, :issue => @issue, :is_done => true)
+    @issue.reload
   end
 
-  test "should post done" do
-    # log_user('admin', 'admin')
-    @request.session[:user_id] = 1
-
-    compatible_xhr_request :put, :done, :is_done => 'true', :id => '1'
-    assert_response :success, 'Post done not working'
-    assert_equal true, Checklist.find(1).is_done, 'Post done not working'
+  def test_issue_shouldnt_close_when_it_has_unfinished_checklists
+    with_checklists_settings('block_issue_closing' => '1') do
+      @issue.status_id = 5
+      assert !@issue.valid?
+    end
   end
 
-  test "should not post done by deny user" do
-    # log_user('admin', 'admin')
-    @request.session[:user_id] = 5
-
-    compatible_xhr_request :put, :done, :is_done => true, :id => "1"
-    assert_response 403, "Post done accessible for all"
+  def test_validation_should_be_ignored_if_setting_disabled
+    with_checklists_settings('block_issue_closing' => '0') do
+      @issue.status_id = 5
+      assert @issue.valid?
+    end
   end
 
-  test "should view issue with checklist" do
-    # log_user('admin', 'admin')
-    @request.session[:user_id] = 1
-    @controller = IssuesController.new
-    compatible_request :get, :show, :id => @issue_1.id
-    assert_select 'ul#checklist_items li#checklist_item_1', @checklist_1.subject, "Issue won't view for admin"
-  end
-
-  test "should not view issue with checklist if deny" do
-    # log_user('anonymous', '')
-    @request.session[:user_id] = 5
-    @controller = IssuesController.new
-    compatible_request :get, :show, :id => @issue_1.id
-    assert_select 'ul#checklist_items', false, "Issue view for anonymous"
+  def test_issue_should_close_when_all_checklists_finished
+    with_checklists_settings('block_issue_closing' => '1') do
+      @checklist_1.update_attributes(:is_done => true)
+      assert @issue.valid?
+    end
+  ensure
+    @checklist_1.update_attributes(:is_done => false)
   end
 end

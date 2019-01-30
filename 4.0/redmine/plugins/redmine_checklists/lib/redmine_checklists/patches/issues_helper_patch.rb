@@ -1,7 +1,7 @@
 # This file is a part of Redmine Checklists (redmine_checklists) plugin,
 # issue checklists management plugin for Redmine
 #
-# Copyright (C) 2011-2017 RedmineUP
+# Copyright (C) 2011-2018 RedmineUP
 # http://www.redmineup.com/
 #
 # redmine_checklists is free software: you can redistribute it and/or modify
@@ -26,8 +26,12 @@ module RedmineChecklists
         base.class_eval do
           unloadable
 
-          alias_method_chain :details_to_strings, :checklists
-          alias_method_chain :render_email_issue_attributes, :checklists if Redmine::VERSION.to_s <= '2.4' && Redmine::VERSION.to_s >= '2.2'
+          alias_method :details_to_strings_without_checklists, :details_to_strings
+          alias_method :details_to_strings, :details_to_strings_with_checklists
+          if Redmine::VERSION.to_s >= '2.2' && Redmine::VERSION.to_s <= '2.4'
+            alias_method :render_email_issue_attributes_without_checklists, :render_email_issue_attributes
+            alias_method :render_email_issue_attributes, :render_email_issue_attributes_with_checklists
+          end
         end
       end
 

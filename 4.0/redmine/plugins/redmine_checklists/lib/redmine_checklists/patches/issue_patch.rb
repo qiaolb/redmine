@@ -1,7 +1,7 @@
 # This file is a part of Redmine Checklists (redmine_checklists) plugin,
 # issue checklists management plugin for Redmine
 #
-# Copyright (C) 2011-2017 RedmineUP
+# Copyright (C) 2011-2018 RedmineUP
 # http://www.redmineup.com/
 #
 # redmine_checklists is free software: you can redistribute it and/or modify
@@ -21,34 +21,41 @@ require_dependency 'issue'
 
 module RedmineChecklists
   module Patches
-
     module IssuePatch
       def self.included(base) # :nodoc:
         base.send(:include, InstanceMethods)
         base.class_eval do
           unloadable # Send unloadable so it will not be unloaded in development
           attr_accessor :old_checklists
+          attr_accessor :removed_checklist_ids
           attr_reader :copied_from
 
-          alias_method_chain :copy, :checklist
+          alias_method :copy_without_checklist, :copy
+          alias_method :copy, :copy_with_checklist
           after_save :copy_subtask_checklists
 
           if ActiveRecord::VERSION::MAJOR >= 4
-            has_many :checklists,  lambda { order("#{Checklist.table_name}.position") }, :class_name => "Checklist", :dependent => :destroy, :inverse_of => :issue
+            has_many :checklists, lambda { order("#{Checklist.table_name}.position") }, :class_name => 'Checklist', :dependent => :destroy, :inverse_of => :issue
           else
-            has_many :checklists, :class_name => "Checklist", :dependent => :destroy, :inverse_of => :issue,
-                     :order => 'position'
+            has_many :checklists, :class_name => 'Checklist', :dependent => :destroy, :inverse_of => :issue, :order => 'position'
           end
 
-          accepts_nested_attributes_for :checklists, :allow_destroy => true, :reject_if => proc { |attrs| attrs["subject"].blank? }
+          accepts_nested_attributes_for :checklists, :allow_destroy => true, :reject_if => proc { |attrs| attrs['subject'].blank? }
+
+          validate :block_issue_closing_if_checklists_unclosed
 
           safe_attributes 'checklists_attributes',
-            :if => lambda {|issue, user| (user.allowed_to?(:done_checklists, issue.project) ||
-                                          user.allowed_to?(:edit_checklists, issue.project))}
+            :if => lambda { |issue, user| (user.allowed_to?(:done_checklists, issue.project) || user.allowed_to?(:edit_checklists, issue.project)) }
 
           def copy_checklists(arg)
             issue = arg.is_a?(Issue) ? arg : Issue.visible.find(arg)
-            issue.checklists.each{ |checklist| Checklist.create(checklist.attributes.except('id','issue_id').merge(:issue => self)) } if issue
+            issue.checklists.each{ |checklist| Checklist.create(checklist.attributes.except('id', 'issue_id').merge(:issue => self)) } if issue
+          end
+
+          def block_issue_closing_if_checklists_unclosed
+            if RedmineChecklists.block_issue_closing? && checklists.any? && status.is_closed?
+              errors.add(:checklists, l(:label_checklists_must_be_completed)) unless (checklists - checklists.where(:id => removed_checklist_ids)).all?(&:is_done)
+            end
           end
         end
       end

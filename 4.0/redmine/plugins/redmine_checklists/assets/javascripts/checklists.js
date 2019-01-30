@@ -206,16 +206,19 @@ Redmine.Checklist = $.klass({
 
   onChecklistRemove: function() {
     this.root.on('click', '.checklist-remove a', $.proxy(function(event){
-      this.preventEvent(event)
-      removed = this.findSpan(event)
-      removed.find('.checklist-remove input[type=hidden]').val('1')
-      removed.fadeOut(200)
-    }, this))
+      this.preventEvent(event);
+      var itemToRemove = this.findSpan(event);
+      var checkbox = itemToRemove.find(".checklist-remove input[type=hidden]");
+
+      if (checkbox.val() === "false") {
+        checkbox.val("1");
+        itemToRemove.fadeOut(200);
+      }
+    }, this));
   },
 
   makeChecklistsSortable: function() {
     $('#checklist_form_items').sortable({
-      revert: true,
       items: '.checklist-item.show',
       helper: "clone",
       stop: function (event, ui) {

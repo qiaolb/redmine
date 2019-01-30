@@ -32,3 +32,5 @@ en:
   label_checklist_status: Checklist status
   label_checklist_is_default: Default
   field_is_for_tracker: Tracker
+  label_checklists_must_be_completed: All checklists of an issue must be done before closing
+  label_checklist_block_issue_closing: Block issue closing

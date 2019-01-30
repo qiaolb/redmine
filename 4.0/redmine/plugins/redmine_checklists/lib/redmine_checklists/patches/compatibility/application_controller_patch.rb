@@ -1,5 +1,3 @@
-# encoding: utf-8
-#
 # This file is a part of Redmine Checklists (redmine_checklists) plugin,
 # issue checklists management plugin for Redmine
 #
@@ -19,40 +17,25 @@
 # You should have received a copy of the GNU General Public License
 # along with redmine_checklists.  If not, see <http://www.gnu.org/licenses/>.
 
-module ChecklistsHelper
-
-  def link_to_remove_checklist_fields(name, f, options={})
-    f.hidden_field(:_destroy) + link_to(name, "javascript:void(0)", options)
-  end
-
-  def new_object(f, association)
-    @new_object ||= f.object.class.reflect_on_association(association).klass.new
-  end
-
-  def fields(f, association)
-    @fields ||= f.fields_for(association, new_object(f, association), :child_index => "new_#{association}") do |builder|
-      render(association.to_s.singularize + "_fields", :f => builder)
-    end
-  end
-
-  def new_or_show(f)
-    if f.object.new_record?
-      if f.object.subject.present?
-        "show"
-      else
-        "new"
+module RedmineChecklists
+  module Patches
+    module ApplicationControllerPatch
+      def self.included(base) # :nodoc:
+        base.extend(ClassMethods)
+        base.class_eval do
+          unloadable # Send unloadable so it will not be unloaded in development
+        end
       end
-    else
-      "show"
+
+      module ClassMethods
+        def before_action(*filters, &block)
+          before_filter(*filters, &block)
+        end
+      end
     end
   end
+end
 
-  def done_css(f)
-    if f.object.is_done
-      "is-done-checklist-item"
-    else
-      ""
-    end
-  end
-
+unless ApplicationController.included_modules.include?(RedmineChecklists::Patches::ApplicationControllerPatch)
+  ApplicationController.send(:include, RedmineChecklists::Patches::ApplicationControllerPatch)
 end
