@@ -1,4 +1,4 @@
-class ChangeColumnArticleToLongText < ActiveRecord::Migration
+class ChangeColumnArticleToLongText < ActiveRecord::Migration[5.2]
   def self.up
     change_column :kb_articles, :content, :text, :limit => 16.megabytes + 3
   end

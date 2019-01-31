@@ -1,4 +1,4 @@
-class AddParentIdToCategories < ActiveRecord::Migration
+class AddParentIdToCategories < ActiveRecord::Migration[5.2]
   def self.up
     add_column :kb_categories, :parent_id, :int
   end

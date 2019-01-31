@@ -1,4 +1,4 @@
-class AddCommentsCountToArticles < ActiveRecord::Migration
+class AddCommentsCountToArticles < ActiveRecord::Migration[5.2]
   def self.up
     add_column :kb_articles, :comments_count, :int
   end
